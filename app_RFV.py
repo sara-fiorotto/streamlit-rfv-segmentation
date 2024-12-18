@@ -3,6 +3,9 @@
 import pandas            as pd
 import streamlit         as st
 import numpy             as np
+from sklearn.cluster import KMeans 
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from datetime            import datetime
 from PIL                 import Image
@@ -169,6 +172,68 @@ def main():
 
         st.write('Quantidade de clientes por tipo de ação')
         st.write(df_RFV['acoes de marketing/crm'].value_counts(dropna=False))
+
+        st.write('Quantidade de clientes por tipo de ação')
+
+        st.write(df_RFV['acoes de marketing/crm'].value_counts(dropna=False))
+
+        st.write('## Clusterização dos clientes com K-Means')
+
+        X = df_RFV[['Recencia', 'Frequencia', 'Valor']]
+
+        num_clusters = 3 
+
+        kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+        kmeans.fit(X)
+
+        df_RFV['Cluster'] = kmeans.labels_
+
+        st.write(df_RFV.head())
+
+        st.write('Quantidade de clientes por cluster')
+
+        st.write(df_RFV['Cluster'].value_counts())
+
+        df_RFV['acoes_resumidas'] = df_RFV['acoes de marketing/crm'].map(dict_acoes).fillna(df_RFV['acoes de marketing/crm'])
+
+        st.write('### Quantidade de Clientes por Tipo de Ação (Resumido)')
+
+        fig, ax = plt.subplots()
+        sns.countplot(data=df_RFV, x='acoes_resumidas', ax=ax, palette='viridis')  # Usar 'acoes_resumidas'
+        ax.set_title('Distribuição de Clientes por Tipo de Ação')
+        ax.set_xlabel('Tipo de Ação (Resumido)')
+        ax.set_ylabel('Quantidade de Clientes')
+
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+
+        st.pyplot(fig)
+
+        st.write('### Clusterização dos Clientes')
+
+        fig, ax = plt.subplots()
+        sns.scatterplot(
+            x=df_RFV['Recencia'], 
+            y=df_RFV['Frequencia'], 
+            hue=df_RFV['Cluster'], 
+            palette='tab10',
+            ax=ax
+        )
+        ax.set_title('Clusters dos Clientes (K-Means)')
+        ax.set_xlabel('Recência')
+        ax.set_ylabel('Frequência')
+
+        st.pyplot(fig)
+
+        st.write('### Quantidade de Clientes por Cluster')
+
+        fig, ax = plt.subplots()
+        df_RFV['Cluster'].value_counts().plot(kind='bar', ax=ax, color='skyblue')
+        ax.set_title('Clientes por Cluster')
+        ax.set_xlabel('Cluster')
+        ax.set_ylabel('Quantidade')
+
+        st.pyplot(fig)
+
 
 if __name__ == '__main__':
 	main()
